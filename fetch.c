@@ -416,12 +416,14 @@ struct mem_info * m_info(void) {
 // series of funtion to read and get packages installed and package manager nad other (flatpak, snap)
 struct packages * get_packages(void){
     struct packages *p;
-
+    pkg_manager_t pkg;
     p = malloc(sizeof(struct packages));
+
     // control if p was correctly allocated
     if(!p){
         return NULL;
     }
+
 
     //initialize structure package to 0
     p->pkg_flatpak = 0;
@@ -429,17 +431,73 @@ struct packages * get_packages(void){
     p->pkg_snap = 0;
 
     // start to check how many packages there are for any manager
-    //pkg_manager_field(p);
+    pkg = check_pkg_manager_type();
+    switch (pkg){
+        case PKG_APT:
+            pkg_count_manager_field(APT_COUNT_CMD,p);
+            break;
+        case PKG_DNF:
+            pkg_count_manager_field(DNF_COUNT_CMD,p);
+            break;
+        case PKG_PACMAN:
+            pkg_count_manager_field(PACMAN_COUNT_CMD,p);
+            break;
+        case PKG_UNKNOWN:
+            printf("Package manager non torvavo\n");
+            break;
+    }
+
     pkg_flatpak_field(p);
     //pkg_snap_field(p);
 
     return p;
 }
 
-/*void pkg_manager_field(struct packages *pkg){
+pkg_manager_t check_pkg_manager_type(void){
 
-    //pkg->pkg_manager = count_pkg(PKG_MANAGER_PATH);
-}*/
+    // series of if to check whiwh binary path exist
+    // access return 0 if file exists and is have exectutable permission
+    // check if pacman exist
+    if(access(PACMAN_BIN_PATH, X_OK) == 0){
+        return PKG_PACMAN;
+    }
+
+    // check if apt exist
+    if(access(APT_BIN_PATH,X_OK) == 0){
+        return PKG_APT;
+    }
+
+    // check if dnf exist
+    if(access(DNF_BIN_PATH,X_OK) == 0){
+        return PKG_DNF;
+    }
+
+    return PKG_UNKNOWN;
+}
+
+void pkg_count_manager_field(const char *cmd, struct packages *pkg){
+    char buffer[256];
+    FILE *fp;
+
+
+    // check if struct pkg is NULL
+    if(!pkg){
+        return;
+    };
+
+    // we open a pipe where son process exec the commnad
+    fp = popen(cmd,"r");
+    // popen failed
+    if(fp == NULL){
+        return;
+    }
+    //implementa while con fgets
+    while(fgets(buffer,sizeof(buffer),fp)){
+        pkg->pkg_manager++;
+    }
+
+    pclose(fp);
+}
 
 void pkg_flatpak_field(struct packages *pkg){
 
@@ -458,6 +516,7 @@ void pkg_flatpak_field(struct packages *pkg){
         pkg->pkg_flatpak += count_pkg_dir(path);
     }
 }
+
 
 /*void pkg_snap_field(struct packages *pkg){
 

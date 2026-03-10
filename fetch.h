@@ -3,12 +3,44 @@
 #include <sys/utsname.h>
 
 /* package managers */
-/* ABSOLUTE PATH */
+/* ABSOLUTE PATH PACMAN*/
 /* directory: each subdirectory = one installed package */
 #define PACMAN_PATH "/var/lib/pacman/local"
-/* ABSOLUTE PATH */
-/* file: must be parsed searching for "install ok installed" */
+/*pacman file : to check if pacman is installed on the machine (binary file ) */
+//#define PACMAN_BIN_FILE  "/usr/bin/pacman"
+
+/* ABSOLUTE PATH APT */
+/* file: contains all the package installed must be parsed searching for "install ok installed" */
 #define DPKG_STATUS_FILE "/var/lib/dpkg/status"
+
+/*ABSOLUTE PATH DNF */
+/* DIRECTORY: rpm database */
+#define DNF_PATH_DB "/var/lib/rpm"
+
+/*CONST PATH BINARY FILE PAKCAGE MANAGERS */
+/*to check every path to find the right one for every distro */
+/* Path to the main pacman binary (package manager used by Arch Linux and derivatives) */
+#define PACMAN_BIN_PATH "/usr/bin/pacman"
+
+/* Path to the main dnf binary (package manager used by Fedora, RHEL and derivatives) */
+#define DNF_BIN_PATH "/usr/bin/dnf"
+
+/* Path to the main apt binary (APT frontend used by Debian, Ubuntu and derivatives) */
+#define APT_BIN_PATH "/usr/bin/apt"
+
+/*COMMAND TO CHECK THE NUMBER OF PACKAGE FROM THE SYSTEM */
+// Pacman (Arch, Manjaro, EndeavourOS)
+// pacman -Q lista tutti i pacchetti installati
+#define PACMAN_COUNT_CMD "pacman -Q"
+
+// APT / dpkg (Debian, Ubuntu, Mint, Pop!_OS)
+// dpkg --get-selections | grep -v deinstall lista solo i pacchetti attivi
+#define APT_COUNT_CMD "dpkg --get-selections | grep -v deinstall"
+
+// DNF / RPM (Fedora, RHEL, CentOS)
+// rpm -qa lista tutti i pacchetti installati
+#define DNF_COUNT_CMD "rpm -qa"
+
 
 /* sandbox package managers */
 /* ABSOLUTE PATH */
@@ -44,6 +76,14 @@ struct mem_info {
     double mem_used; // the amount of memory RAM actually used
 };
 
+// enum  that help to identify how many packages are on distro and which pacakge manager control them (pacman, apt, dnf) on different distro
+typedef enum {
+    PKG_PACMAN,
+    PKG_DNF,
+    PKG_APT,
+    PKG_UNKNOWN
+   } pkg_manager_t;
+
 // struct that identify how many packages are on distro and which pacakge manager control them (pacman, apt, dnf) on different distro
 struct packages{
     int pkg_manager; // counter of package for distro's package manager on machine
@@ -62,9 +102,10 @@ struct mem_info * m_info(void); // fill the struct mem_info
 // package manager function
 struct packages * get_packages(void); // fill the struct packages fields
 int count_pkg_dir(const char *path);  // for all the package and sandbox managaer he count the installed package
-void pkg_manager_field(struct packages *p);
+void pkg_count_manager_field(const char *cmd, struct packages *p);
 void pkg_flatpak_field(struct packages *p);
 void pkg_snap_field(struct packages *p);
+pkg_manager_t  check_pkg_manager_type(void); //find what kind of pkg manager is check the binary file
 
 
 
