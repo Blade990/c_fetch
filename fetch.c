@@ -440,7 +440,7 @@ struct packages * get_packages(void){
             pkg_count_manager_field(DNF_COUNT_CMD,p);
             break;
         case PKG_PACMAN:
-            pkg_count_manager_field(PACMAN_COUNT_CMD,p);
+            p->pkg_manager = count_pkg_dir(PACMAN_PATH) - 1;
             break;
         case PKG_UNKNOWN:
             printf("Package manager non torvavo\n");
@@ -448,7 +448,7 @@ struct packages * get_packages(void){
     }
 
     pkg_flatpak_field(p);
-    //pkg_snap_field(p);
+    pkg_count_snap_field(SNAP_DIR,p);
 
     return p;
 }
@@ -475,10 +475,9 @@ pkg_manager_t check_pkg_manager_type(void){
     return PKG_UNKNOWN;
 }
 
-void pkg_count_manager_field(const char *cmd, struct packages *pkg){
+void pkg_count_manager_field(const char *cmd, struct packages *pkg) {
     char buffer[256];
     FILE *fp;
-
 
     // check if struct pkg is NULL
     if(!pkg){
@@ -517,18 +516,17 @@ void pkg_flatpak_field(struct packages *pkg){
     }
 }
 
-
-/*void pkg_snap_field(struct packages *pkg){
-
-    //pkg->pkg_snap = count_pkg(SNAP_PATH);
-}*/
+// function which count with command usind a pipe
+void pkg_count_snap_field(const char *snap_path,struct packages *pkg){
+    pkg->pkg_snap= count_pkg_dir(snap_path);
+}
 
 //package counter function
-int count_pkg_dir(const char *path){
+int count_pkg_dir(const char *path) {
     // counter for packages found inside the directory
     int i = 0;
     //structure used to store each directory entry (file or folder)
-    struct dirent * entry;
+    struct dirent *entry;
 
     //open the directory specified by "path"
     //opendir() returns a pointer to DIR if successful
@@ -543,17 +541,11 @@ int count_pkg_dir(const char *path){
     // read directory entries one by one
     // readdir() returns NULL when no more entries exist
     while((entry = readdir(cur_dir)) != NULL){
-
         // skip "." (current directory) and ".." (parent directory) if found
-        if(strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0){
-
-            continue;
-        }
-
+        if(strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
         i++;
     }
     // close the directory stream and free resources
     closedir(cur_dir);
-
     return i;
 }

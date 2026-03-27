@@ -104,7 +104,7 @@ struct packages * get_packages(void); // fill the struct packages fields
 int count_pkg_dir(const char *path);  // for all the package and sandbox managaer he count the installed package
 void pkg_count_manager_field(const char *cmd, struct packages *p);
 void pkg_flatpak_field(struct packages *p);
-void pkg_snap_field(struct packages *p);
+void pkg_count_snap_field(const char *path, struct packages *p);
 pkg_manager_t  check_pkg_manager_type(void); //find what kind of pkg manager is check the binary file
 
 
