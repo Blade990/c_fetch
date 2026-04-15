@@ -1,117 +1,12 @@
-// include headers for base functions
+#include "system.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/select.h>
-#include <sys/utsname.h> // include the struct for the info on kernel
-#include "fetch.h"
-#include <dirent.h> //include to work with dir function
-#include <sys/statvfs.h> // include the following struct of filesystem :
+#include <sys/utsname.h>
+#include <sys/statvfs.h>
 
-/*
-struct statvfs {
-     unsigned long f_bsize;    // Dimensione dei blocchi (in byte)
-     unsigned long f_frsize;   // Dimensione del blocco fondamentale (in byte)
-     unsigned long f_blocks;   // Numero totale di blocchi
-     unsigned long f_bfree;    // Numero di blocchi liberi
-     unsigned long f_bavail;   // Numero di blocchi liberi disponibili per l'utente
-     unsigned long f_files;    // Numero totale di file
-     unsigned long f_ffree;    // Numero di file liberi
-     unsigned long f_favail;   // Numero di file liberi disponibili per l'utente
-     unsigned long f_fsid;     // Identificatore del file system
-     unsigned long f_flag;     // Flags del file system
-     unsigned long f_namemax;  // Lunghezza massima di un nome di file
- };
- */
-//macro and const for printf's look
-#define RESET   "\033[0m" // Macro to reset the text color to default (terminal default color)
-#define CYAN    "\033[36m"
-#define BLUE    "\033[34m"
-#define GREEN   "\033[32m"
-
-/* prototype of printf look
- printf(BLUE "╭──────────────────────────────╮\n" RESET);
- printf(BLUE "│ " CYAN "Sistema" RESET "   : %s\n", info.sysname);
- printf(BLUE "│ " CYAN "Hostname" RESET "  : %s\n", info.nodename);
- printf(BLUE "│ " CYAN "Kernel" RESET "    : %s\n", info.release);
- printf(BLUE "│ " CYAN "Arch" RESET "      : %s\n", info.machine);
- printf(BLUE "╰──────────────────────────────╯\n" RESET);
- */
-int main (void){
-    char *kernel_ver = NULL;
-    char *os_name = NULL;
-    long int full_part, decimal_part; // to represnt in detail without loss of information
-    struct cpu *cpu = NULL;
-    struct disk_space *disk = NULL;
-    struct mem_info *mem_info = NULL;
-    struct packages *pkg_info = NULL;
-
-    //this sereis of if control every failed and variables was returred with success then we can print infomation retruned on screen
-    kernel_ver = kernel_info();
-    if (!kernel_ver) {
-        fprintf(stderr, "kernel_info failed\n");
-        goto cleanup;
-    }
-
-    os_name = os_name_inf();
-    if (!os_name) {
-        fprintf(stderr, "os_name_inf failed\n");
-        goto cleanup;
-    }
-
-    cpu = cpu_info();
-    if (!cpu) {
-        fprintf(stderr, "cpu_info failed\n");
-        goto cleanup;
-    }
-
-    disk = disk_usage();
-    if(!disk) {
-        fprintf(stderr, " diskusage() failed\n");
-        goto cleanup;
-    }
-
-    mem_info = m_info();
-    if(!mem_info) {
-        fprintf(stderr, "Errore recuperare mem inf failed\n");
-        goto cleanup;
-    }
-
-    pkg_info = get_packages();
-    if(!pkg_info){
-        fprintf(stderr, "Error, something went wrong trying to get number packages");
-        goto cleanup;
-    }
-    printf(BLUE "╭──────────────────────────────╮\n" RESET);
-    printf(BLUE "| " CYAN "%-9s" RESET " : %s\n", "Sistema", os_name);
-    printf(BLUE "| " CYAN "%-9s" RESET " : %s\n", "Kernel", kernel_ver);
-    printf(BLUE "| " CYAN "%-9s" RESET " : %s\n", "CPU model", cpu->core_model);
-    printf(BLUE "| " CYAN "%-9s" RESET " : %d\n", "CPU cores", cpu->core_numb);
-    printf(BLUE "| " CYAN "%-9s" RESET " : %.2f GB\n","Available Space User (disk /home)", disk->available_space);
-    printf(BLUE "| " CYAN "%-9s" RESET " : %.0f GB\n","Mem Free Tot",mem_info->mem_free);
-    printf(BLUE "| " CYAN "%-9s" RESET " : %.0f GB\n","Mem Used",mem_info->mem_used);
-    printf(BLUE "| " CYAN "%-9s" RESET " : (flatpak apps) %d | (pacman) %d | (snap) %d\n","Packages",pkg_info->pkg_flatpak,pkg_info->pkg_manager,pkg_info->pkg_snap);
-    // Convert CPU speed in centi-GHz (hundredths of GHz) to a human-readable format
-    // full_part  -> integer part of the GHz
-    // decimal_part -> fractional part (2 digits) of the GHz
-    full_part = cpu->max_freq / 100; // full part
-    decimal_part = cpu->max_freq % 100;//decimal part
-    printf(BLUE "| " CYAN "%-9s" RESET " : %ld.%02ld GHz\n","CPU Max Frequency", full_part, decimal_part);
-    // use free function after visulization of field and variables we can free the memory
-    cleanup:
-    free(kernel_ver);
-    free(os_name);
-    free(mem_info); // we're freeing the mmeory of the struct mem_info
-    free(disk); // we're freeing the mmeory of the struct disk
-    free(pkg_info);// free
-    if(cpu) {
-       free(cpu->core_model);
-       free(cpu);
-    }
-
-    return 0;
-}
 
 char * kernel_info(void) {
     struct utsname info;
@@ -164,7 +59,7 @@ char * os_name_inf(void) {
 }
 
 // This function read file to take the real seed of cpu and return it to cpu_info
-int cpu_speed(){
+int cpu_max_freq(){
     long int cpu_cur_freq;//var which bring the current cpu_speed of cpu
     int valid = 1; // var that check if the string is a real number 1 ok, instead 0 error
     FILE *fp;
@@ -288,7 +183,7 @@ struct cpu * cpu_info() {
     } // close while
 
     // call function that gives cpu speed and fill the field of cpu struct
-    cpu->max_freq = cpu_speed();
+    cpu->max_freq = cpu_max_freq();
     // don't need anymore the file /proc/cpuinfo
     fclose(fp);
     //all finished corectly, we can close the file
@@ -411,141 +306,4 @@ struct mem_info * m_info(void) {
     info->mem_used = info->mem_tot - info->mem_avi;
     fclose(fp);
     return info;
-}
-
-// series of funtion to read and get packages installed and package manager nad other (flatpak, snap)
-struct packages * get_packages(void){
-    struct packages *p;
-    pkg_manager_t pkg;
-    p = malloc(sizeof(struct packages));
-
-    // control if p was correctly allocated
-    if(!p){
-        return NULL;
-    }
-
-
-    //initialize structure package to 0
-    p->pkg_flatpak = 0;
-    p->pkg_manager = 0;
-    p->pkg_snap = 0;
-
-    // start to check how many packages there are for any manager
-    pkg = check_pkg_manager_type();
-    switch (pkg){
-        case PKG_APT:
-            pkg_count_manager_field(APT_COUNT_CMD,p);
-            break;
-        case PKG_DNF:
-            pkg_count_manager_field(DNF_COUNT_CMD,p);
-            break;
-        case PKG_PACMAN:
-            p->pkg_manager = count_pkg_dir(PACMAN_PATH) - 1;
-            break;
-        case PKG_UNKNOWN:
-            printf("Package manager non torvavo\n");
-            break;
-    }
-
-    pkg_flatpak_field(p);
-    pkg_count_snap_field(SNAP_DIR,p);
-
-    return p;
-}
-
-pkg_manager_t check_pkg_manager_type(void){
-
-    // series of if to check whiwh binary path exist
-    // access return 0 if file exists and is have exectutable permission
-    // check if pacman exist
-    if(access(PACMAN_BIN_PATH, X_OK) == 0){
-        return PKG_PACMAN;
-    }
-
-    // check if apt exist
-    if(access(APT_BIN_PATH,X_OK) == 0){
-        return PKG_APT;
-    }
-
-    // check if dnf exist
-    if(access(DNF_BIN_PATH,X_OK) == 0){
-        return PKG_DNF;
-    }
-
-    return PKG_UNKNOWN;
-}
-
-void pkg_count_manager_field(const char *cmd, struct packages *pkg) {
-    char buffer[256];
-    FILE *fp;
-
-    // check if struct pkg is NULL
-    if(!pkg){
-        return;
-    };
-
-    // we open a pipe where son process exec the commnad
-    fp = popen(cmd,"r");
-    // popen failed
-    if(fp == NULL){
-        return;
-    }
-    //implementa while con fgets
-    while(fgets(buffer,sizeof(buffer),fp)){
-        pkg->pkg_manager++;
-    }
-
-    pclose(fp);
-}
-
-void pkg_flatpak_field(struct packages *pkg){
-
-    // count system flatpak applications
-    pkg->pkg_flatpak = count_pkg_dir(FLATPAK_SYS_DIR);
-    // get the HOME directory of the current user
-    char *home = getenv("HOME");
-
-    // if home exist build the absolute path starting from HOME
-    if(home){
-
-        char path[512];
-        // build: /home/user/.local/share/flatpak/app
-        snprintf(path, sizeof(path), "%s/%s", home, FLATPAK_USER_DIR);
-        // sum to know all the package of FLATPAK_SYS_DIR + FLATPAK_USER_DIR
-        pkg->pkg_flatpak += count_pkg_dir(path);
-    }
-}
-
-// function which count with command usind a pipe
-void pkg_count_snap_field(const char *snap_path,struct packages *pkg){
-    pkg->pkg_snap= count_pkg_dir(snap_path);
-}
-
-//package counter function
-int count_pkg_dir(const char *path) {
-    // counter for packages found inside the directory
-    int i = 0;
-    //structure used to store each directory entry (file or folder)
-    struct dirent *entry;
-
-    //open the directory specified by "path"
-    //opendir() returns a pointer to DIR if successful
-    DIR *cur_dir = opendir(path);
-
-    //if the directory cannot be opened (not found or permission denied)
-    // return 0 packages
-    if(!cur_dir){
-        return 0;
-    }
-
-    // read directory entries one by one
-    // readdir() returns NULL when no more entries exist
-    while((entry = readdir(cur_dir)) != NULL){
-        // skip "." (current directory) and ".." (parent directory) if found
-        if(strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
-        i++;
-    }
-    // close the directory stream and free resources
-    closedir(cur_dir);
-    return i;
 }

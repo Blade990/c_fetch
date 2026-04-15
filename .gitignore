@@ -1,0 +1,11 @@
+# ignorare file compilati
+*.o
+fetch
+
+# ignorare le cartelle di build o binari
+build/
+bin/
+single_file_fetch/
+
+# ignorare file temporanei dell'editor
+*.swp
