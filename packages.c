@@ -1,6 +1,7 @@
 #include "packages.h"
 #include "flatpak.h"
 #include "pacman.h"
+#include "snap.h"
 
 #include <stdlib.h>
 #include <stdlib.h>
@@ -29,23 +30,21 @@ struct packages * get_packages(void){
     pkg = check_pkg_manager_type();
 
     switch (pkg){
-       /* case PKG_APT:
+        /*case PKG_APT:
             p->pkg_manager = count_pkg_file(DPKG_PATH_FILE);
             break;*/
         /*case PKG_DNF:
             pkg_count_manager_field(DNF_COUNT_CMD,p);
-            break;*/
+            //break;*/
         case PKG_PACMAN:
             p->pkg_manager = pacman_pkg_count(PACMAN_PATH);
             break;
         case PKG_UNKNOWN:
-            free(p);
-            return NULL;
-
+            break;
     }
 
     pkg_flatpak_field(p);
-   // pkg_count_snap_field(SNAP_DIR,p);
+    p->pkg_snap = count_pkg_snap();
 
     return p;
 }
