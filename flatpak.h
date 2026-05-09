@@ -11,6 +11,6 @@
 /* directory: $HOME/.local/share/flatpak/app */
 #define FLATPAK_USER_DIR ".local/share/flatpak/app"
 
-void pkg_flatpak_field(struct packages *p);
+int pkg_flatpak_field(void);
 
 #endif

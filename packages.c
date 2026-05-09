@@ -1,7 +1,9 @@
 #include "packages.h"
 #include "flatpak.h"
 #include "pacman.h"
+#include "apt.h"
 #include "snap.h"
+
 
 #include <stdlib.h>
 #include <stdlib.h>
@@ -10,10 +12,10 @@
 #include <unistd.h>
 
 
-struct packages * get_packages(void){
-    struct packages *p;
+packages_info_t * get_packages(void){
+    packages_info_t  *p;
     pkg_manager_t pkg;
-    p = malloc(sizeof(struct packages));
+    p = malloc(sizeof( packages_info_t));
 
     // control if p was correctly allocated
     if(!p){
@@ -30,9 +32,9 @@ struct packages * get_packages(void){
     pkg = check_pkg_manager_type();
 
     switch (pkg){
-        /*case PKG_APT:
-            p->pkg_manager = count_pkg_file(DPKG_PATH_FILE);
-            break;*/
+        case PKG_APT:
+            p->pkg_manager = get_apt_pkg();
+            break;
         /*case PKG_DNF:
             pkg_count_manager_field(DNF_COUNT_CMD,p);
             //break;*/
@@ -40,10 +42,11 @@ struct packages * get_packages(void){
             p->pkg_manager = pacman_pkg_count(PACMAN_PATH);
             break;
         case PKG_UNKNOWN:
+            p->pkg_manager = 0;
             break;
     }
 
-    pkg_flatpak_field(p);
+    p->pkg_flatpak = pkg_flatpak_field();
     p->pkg_snap = count_pkg_snap();
 
     return p;
@@ -59,9 +62,9 @@ pkg_manager_t check_pkg_manager_type(void){
     }
 
     // check if apt exist
-    /*if(access(APT_BIN_PATH,X_OK) == 0){
+    if(access(APT_BIN_PATH,X_OK) == 0){
         return PKG_APT;
-        }*/
+    }
 
     // check if dnf exist
     /*if(access(DNF_BIN_PATH,X_OK) == 0){
@@ -91,11 +94,29 @@ int count_pkg_dir(const char *path) {
     // read directory entries one by one
     // readdir() returns NULL when no more entries exist
     while((entry = readdir(cur_dir)) != NULL){
+
         // skip "." (current directory) and ".." (parent directory) if found
-        if(strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
+        if(strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+            continue;
+        }
         i++;
     }
     // close the directory stream and free resources
     closedir(cur_dir);
     return i;
+}
+
+void free_packages_info(packages_info_t *info) {
+    dynarray_t da_struct;
+
+    if (!info) {
+        return;
+    }
+
+    /* Avvolge il puntatore info nella struttura dynarray */
+    da_struct.ptr = info;
+    da_struct.ts = sizeof(packages_info_t);
+
+    /* Libera la memoria con la funzione della libreria */
+    dafree(&da_struct);
 }

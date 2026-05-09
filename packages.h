@@ -10,20 +10,21 @@
 // enum  that help to identify how many packages are on distro and which pacakge manager control them (pacman, apt, dnf) on different distro
 typedef enum {
     PKG_PACMAN,
-   // PKG_DNF,
-   // PKG_APT,
+    //PKG_DNF,
+    PKG_APT,
     PKG_UNKNOWN
    } pkg_manager_t;
 
 // struct that identify how many packages are on distro and which pacakge manager control them (pacman, apt, dnf) on different distro
-struct packages{
+typedef struct packages_info{
     int pkg_manager; // counter of package for distro's package manager on machine
     int pkg_flatpak; // counter of packae for flatpak package on machine
     int pkg_snap;  // counter of package for snap package on machine
-};
+} packages_info_t;
 
 // prototype function
-struct packages * get_packages(void); // fill the struct packages fields
+packages_info_t *get_packages(void);; // fill the struct packages fields
 int count_pkg_dir(const char *path);  // for all the package and sandbox managaer he count the installed package
 pkg_manager_t  check_pkg_manager_type(void); //find what kind of pkg manager is check the binary file
+void free_packages_info(packages_info_t *info);
 #endif
