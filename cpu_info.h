@@ -16,7 +16,7 @@
 typedef struct cpu_info {
     char *core_model; /* CPU model name (e.g., "AMD Ryzen 7 5800X") */
     size_t core_numb; /* Total number of CPU cores/threads */
-    size_t max_freq; /* Maximum CPU frequency in MHz */
+    double max_freq; /* Maximum CPU frequency in MHz */
 } cpu_info_t;
 
 
@@ -27,5 +27,5 @@ void free_cpu_info(cpu_info_t *info);
 /* Prototype Subfunction */
 char* get_cpu_model(void);
 size_t get_cpu_cores(void);
-size_t get_cpu_freq(void);
+double get_cpu_freq(void);
 #endif

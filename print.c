@@ -29,8 +29,8 @@ void print_all(os_info_t *os_data,mem_info_t *mem_data,disk_info_t *disk_data, p
         if (cpu_data->core_numb > 0) {
             printf(BLUE "│ " CYAN "%-12s" RESET " : %lu\n", "CPU cores", (unsigned long)cpu_data->core_numb);
         }
-        if (cpu_data->max_freq > 0) {
-            printf(BLUE "│ " CYAN "%-12s" RESET " : %lu MHz\n", "CPU max freq", (unsigned long)cpu_data->max_freq);
+        if (cpu_data->max_freq > 0.0) {
+            printf(BLUE "│ " CYAN "%-12s" RESET " : %.2f GHz\n", "CPU max freq", cpu_data->max_freq);
         }
     }
 

@@ -84,9 +84,9 @@ char* get_cpu_model(void){
 }
 
 /* Helper function: retrieves CPU maximum frequency */
-size_t get_cpu_freq(void) {
+double get_cpu_freq(void) {
     /* --- VARIABLE DECLARATIONS --- */
-    size_t freq_mhz;        /* Final frequency value in MHz */
+    double freq_ghz;        /* Final frequency value in MHz */
     char line[256];         /* Buffer to read line for fallback parsing */
     char *find;              /* Pointer used to find the colon in fallback */
     unsigned long freq_khz; /* Temporary variable to read raw value from sysfs */
@@ -94,24 +94,24 @@ size_t get_cpu_freq(void) {
     FILE *fp;               /* File pointer for the fallback /proc/cpuinfo */
 
     /* --- INITIALIZATIONS --- */
-    freq_mhz = 0;
+    freq_ghz = 0.0;
 
     /* Attempt 1: Read the exact hardware max frequency from sysfs */
     freq_fp = fopen(CPU_MAX_FREQ_PATH, "r");
 
     /* If sysfs file is accessible, parse the frequency in KHz */
     if (freq_fp) {
-        freq_khz = 0;
+        freq_khz = 0.0;
 
         /* If read succeeds, convert KHz to MHz */
         if (fscanf(freq_fp, "%lu", &freq_khz) == 1) {
-            freq_mhz = freq_khz / 1000;
+            freq_ghz = (double) freq_khz / 1000000.0;;
         }
         fclose(freq_fp);
     }
 
     /* Attempt 2: Fallback to /proc/cpuinfo if sysfs was unavailable */
-    if (freq_mhz == 0) {
+    if (freq_ghz == 0) {
         fp = fopen(CPU_INFO_PATH, "r");
 
         /* If fallback file also cannot be opened, return 0 */
@@ -128,8 +128,8 @@ size_t get_cpu_freq(void) {
 
                 /* If colon found, convert the string value to double/size_t */
                 if (find) {
-                    freq_mhz = (size_t)strtod(find + 1, NULL);
-                }
+                    freq_ghz = strtod(find + 1, NULL) / 1000.0;
+                }/*  exit the loop */
                 /* Frequency extracted from fallback, exit the loop */
                 break;
             }
@@ -137,7 +137,7 @@ size_t get_cpu_freq(void) {
         fclose(fp);
     }
 
-    return freq_mhz;
+    return freq_ghz;
 }
 
 /* Helper function: counts the total number of CPU cores */
