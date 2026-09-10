@@ -84,7 +84,7 @@ cleanup:
         free_packages_info(pkg_data);
     }
 
-    //free(disk);
-    //free(mem_info);
-     return 0;
+    free(disk_data);
+    free(mem_data);
+    return 0;
 }
